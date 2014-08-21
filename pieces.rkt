@@ -1,6 +1,8 @@
 #lang racket/base
 
 (provide (struct-out move-sequence)
+         (struct-out piece)
+         define-piece
          move
          leaper
          alternatives
@@ -8,31 +10,22 @@
          on-initial
          on-capture
          on-non-capture
-         as-locust
-         (struct-out pt))
+         as-locust)
 
 (require racket/match
          racket/list
          racket/set
+         "constants.rkt"
          "pt.rkt")
-
-; Points, with associated methods; can also be used as offsets
-(struct pt (x y) #:transparent)
-
-(define (pt+ p1 p2)
-  (match-define (pt x1 y1) p1)
-  (match-define (pt x2 y2) p2)
-  (pt (+ x1 x2) (+ y1 y2)))
-
-(define (pt* s p)
-  (match-define (pt x y) p)
-  (pt (* s x) (* s y)))
 
 ; Move sequences for a piece; used for special flags (such as initial, capturing, etc)
 (struct move-sequence (tag moves) #:transparent)
 
-; Parameters for the current board
-(define current-board-size (make-parameter 8))
+; Piece definitions, combine moves with a symbolic name 
+(struct piece (name moves) #:transparent)
+
+(define-syntax-rule (define-piece name moves)
+  (define name (piece 'name moves)))
 
 ; Return a sequence of all possible offsets for a given direction
 (define (offsets-by-direction direction)
