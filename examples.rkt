@@ -45,13 +45,17 @@
                         'King   "♚"
                         'Pawn   "♟")))
 
+(set-standard-glyphs)
+
 ; ===== Fairy chess pieces =====
 
 ; Move one square like a rook, followed by any number of spaces diagonally outwards
-(define-piece Aanca (alternatives (and-then (move 1 '>) (move 'n 'X>))
-                            (and-then (move 1 (pt 1 0))  (alternatives (move 'n (pt  1 -1)) (move 'n (pt  1  1))))
-                            (and-then (move 1 '<) (move 'n 'X<))
-                            (and-then (move 1 (pt -1 0)) (alternatives (move 'n (pt -1 -1)) (move 'n (pt -1  1))))))
+(define-piece Aanca
+  (alternatives 
+   (and-then (move 1 '>) (move 'n 'X>))
+   (and-then (move 1 (pt 1 0))  (alternatives (move 'n (pt  1 -1)) (move 'n (pt  1  1))))
+   (and-then (move 1 '<) (move 'n 'X<))
+   (and-then (move 1 (pt -1 0)) (alternatives (move 'n (pt -1 -1)) (move 'n (pt -1  1))))))
 
 (define-piece Adjutant     (move  1 '<>))
 (define-piece Advisor      (move  1 'X))
