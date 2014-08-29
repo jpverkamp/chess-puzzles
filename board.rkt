@@ -63,56 +63,59 @@
               [else     1]))
           
           (define move-sublists
-           (for*/list ([move-seq (in-list moves)])
-             (match-define (move-sequence tags original-offset*) move-seq)
-             (define offset* (map (λ (offset) (pt* player-multiplier offset)) original-offset*))
-             
-             ; Find the first target
-             (define first-target
-               (for/first ([i (in-naturals)]
-                           [offset (in-list offset*)]
-                           #:when (board-ref b (pt+ origin offset)))
-                 (list i (board-ref b (pt+ origin offset)))))
-             
-             ; If the first target belongs to the owner, remove it (no self captures)
-             ; TODO: Add an option for self-captures
-             (define self-capture
-               (and first-target
-                    (eq? (first (second first-target)) player)))
-             
-             (map (λ (offset) (pt+ origin offset))
-                  (cond
-                    ; Bail out if we're initial only but not on the initial move
-                    [(and (set-member? tags 'initial-only) (not initial))
-                     (list)]
-                    ; If we're capturing only, can only move if we have a target and to that square
-                    [(set-member? tags 'capture-only)
-                     (if (and first-target (not self-capture))
-                         (list (list-ref offset* (first first-target)))
-                         (list))]
-                    ; If we're not capturing, get everything up until the target (or everything if no target)
-                    [(set-member? tags 'non-capture)
-                     (if (and first-target (> (first first-target) 0))
-                         (take offset* (- (first first-target) 1))
-                         offset*)]
-                    ; If we're a locust, we have to check the space after the self target is empty
-                    [(set-member? tags 'as-locust)
-                     (cond
-                       [(and first-target (not self-capture) (> (length offset*) (+ (first first-target) 1)))
-                        (define next-target (board-ref b (list-ref offset* (+ (first first-target) 1))))
-                        (if (not next-target)
-                            (list (list-ref offset* (+ 1 (first first-target))))
-                            (list))]
-                       [else
-                        (list)])]
-                    ; Otherwise, if the target is a piece but we own it, don't land there
-                    [(and first-target self-capture)
-                     (if (> (first first-target) 0)
-                         (take offset* (- (first first-target) 1))
-                         (list))]
-                    ; Otherwise, include the entire range
-                    [else
-                     offset*]))))
+            (for*/list ([move-seq (in-list moves)])
+              (match-define (move-sequence tags original-offset*) move-seq)
+              (define offset* (map (λ (offset) (pt* player-multiplier offset)) original-offset*))
+              
+              ; Find the first target
+              (define first-target
+                (for/first ([i (in-naturals)]
+                            [offset (in-list offset*)]
+                            #:when (board-ref b (pt+ origin offset)))
+                  (list i (board-ref b (pt+ origin offset)))))
+              
+              ; If the first target belongs to the owner, remove it (no self captures)
+              ; TODO: Add an option for self-captures
+              (define self-capture
+                (and first-target
+                     (eq? (first (second first-target)) player)))
+              
+              (map (λ (offset) (pt+ origin offset))
+                   (cond
+                     ; Bail out if we're initial only but not on the initial move
+                     [(and (set-member? tags 'initial-only) (not initial))
+                      (list)]
+                     ; If we're capturing only, can only move if we have a target and to that square
+                     [(set-member? tags 'capture-only)
+                      (if (and first-target (not self-capture))
+                          (list (list-ref offset* (first first-target)))
+                          (list))]
+                     ; If we're not capturing, get everything up until the target (or everything if no target)
+                     [(set-member? tags 'non-capture)
+                      (if (and first-target (> (first first-target) 0))
+                          (take offset* (- (first first-target) 1))
+                          offset*)]
+                     ; If we're a locust, we have to check the space after the self target is empty
+                     [(set-member? tags 'as-locust)
+                      (cond
+                        [(and first-target (not self-capture) (> (length offset*) (+ (first first-target) 1)))
+                         (define next-target (board-ref b (list-ref offset* (+ (first first-target) 1))))
+                         (if (not next-target)
+                             (list (list-ref offset* (+ 1 (first first-target))))
+                             (list))]
+                        [else
+                         (list)])]
+                     ; If the target is an enemy, capture it and stop
+                     ; Otherwise, if the target is a piece but we own, don't land there
+                     [first-target
+                      (if self-capture
+                          (if (> (first first-target) 0)
+                              (take offset* (first first-target))
+                              (list))
+                          (take offset* (+ (first first-target) 1)))]
+                     ; Otherwise, include the entire range
+                     [else
+                      offset*]))))
           
           ; Stick all the lists together since we no longer care how they got there
           ; And remove all moves that jump off of the board somehow
