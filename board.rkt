@@ -2,8 +2,12 @@
 
 (provide (struct-out board)
          board-ref
+         board-set
+         board-set!
+         board-move
          board-move!
-         moves-from)
+         moves-from
+         make-board)
 
 (require racket/match
          racket/list
@@ -16,6 +20,13 @@
 ; (player, piece) if there is a piece there
 ; #f if empty 
 (struct board (pieces data) #:transparent)
+
+; Create a new empty mxn board
+(define (make-board width [height width] #:pieces [pieces (hash)])
+  (board pieces 
+         (for/vector ([y (in-range height)])
+           (for/vector ([x (in-range width)])
+             #f))))
 
 ; Test if a point is on the given board
 (define (on-board? b p)
@@ -34,14 +45,31 @@
     [else
      #f]))
 
+; Set a piece (for example to populate a board)
+(define (board-set! b p v)
+  (match-define (board pieces data) b)
+  (match-define (pt x y) p)
+  (when (on-board? b p)
+    (vector-set! (vector-ref data y) x v)))
+
+; Non mutable version of setting a piece
+(define (board-set b p v)
+  (match-define (board pieces data) b)
+  (match-define (pt x y) p)
+  (board 
+   pieces
+   (for/vector ([y (in-naturals)] [row (in-vector data)])
+     (for/vector ([x (in-naturals)] [el (in-vector row)])
+       (if (equal? p (pt x y)) v el)))))
+
 ; Move a piece from one square to another, overwriting whatever is in the destination square
 (define (board-move! b src dst)
-  (match-define (board pieces data) b)
-  (match-define (pt src-x src-y) src)
-  (match-define (pt dst-x dst-y) dst)
-  (define piece (board-ref data src))
-  (vector-set! (vector-ref data dst-y) dst-x piece)
-  (vector-set! (vector-ref data src-y) src-x #f))
+  (board-set! b dst (board-ref b src))
+  (board-set! b src #f))
+
+; Non-mutable version of board moving
+(define (board-move b src dst)
+  (board-set (board-set b dst (board-ref b src)) src #f))
 
 ; Return a list of moves that a piece can make on the given board given it's origin point
 ; TODO: Implement locusts
