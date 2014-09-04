@@ -57,7 +57,7 @@
              "LightGray"]
             [else
              "DarkGray"]))
-        (define tile (colorize (filled-rectangle 20 20) tile-color))
+        (define tile (colorize (filled-rectangle tile-size tile-size) tile-color))
         
         (cond
           ; If there is a piece here, render the piece, colorize based on the player, and overlay on the tile
