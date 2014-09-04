@@ -23,10 +23,17 @@
 
 ; Create a new empty mxn board
 (define (make-board width [height width] #:pieces [pieces (hash)])
-  (board pieces 
-         (for/vector ([y (in-range height)])
-           (for/vector ([x (in-range width)])
-             #f))))
+  (board 
+   (cond 
+     [(hash? pieces) pieces]
+     [(list? pieces)
+      (for/hash ([p (in-list pieces)])
+        (match-define (piece name moves) p)
+        (values name p))]
+     [else (hash)])
+   (for/vector ([y (in-range height)])
+     (for/vector ([x (in-range width)])
+       #f))))
 
 ; Test if a point is on the given board
 (define (on-board? b p)
